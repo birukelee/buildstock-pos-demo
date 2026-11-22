@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BuildStock — Construction Materials Stock & POS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Custom subtle scrollbars for counter screens */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.55); }
+    @media print {
+      body * { visibility: hidden; }
+      #receipt-printable, #receipt-printable * { visibility: visible; }
+      #receipt-printable { position: fixed; left: 0; top: 0; width: 100%; background: #fff !important; color: #000 !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-orange-500 selection:text-white transition-colors duration-150">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-16 gap-3">
+        <!-- Brand Identity -->
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-orange-600 text-white flex items-center justify-center shadow-sm shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+          </div>
+          <div class="truncate">
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold tracking-tight text-base sm:text-lg">ShiKokeb General Trade</span>
+              <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">MVP</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 truncate">Arbaminch Hardware & Construction Supply</p>
+          </div>
+        </div>
+
+        <!-- Global Controls: Currency, Theme, Reset -->
+        <div class="flex items-center gap-2">
+          <!-- Currency Toggle -->
+          <div class="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200/70 dark:border-slate-700">
+            <button id="btn-curr-etb" onclick="setCurrency('ETB')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition">ETB</button>
+            <button id="btn-curr-usd" onclick="setCurrency('USD')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition">USD</button>
+          </div>
+
+          <!-- Theme Toggle -->
+          <button onclick="toggleTheme()" title="Toggle Light/Dark Mode" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
+            <svg id="icon-sun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <svg id="icon-moon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+          </button>
+
+          <!-- Reset Demo Data -->
+          <button onclick="openResetConfirm()" class="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Reset Demo
+          </button>
+        </div>
+      </div>
+
+      <!-- Primary Navigation Tabs -->
+      <nav class="flex items-center gap-1.5 overflow-x-auto pb-2.5 pt-1 no-scrollbar" aria-label="Main Navigation">
+        <button data-tab="dashboard" onclick="switchTab('dashboard')" class="nav-tab flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          Dashboard
+          <span id="badge-low-stock" class="px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300">0</span>
+        </button>
+
+        <button data-tab="pos" onclick="switchTab('pos')" class="nav-tab flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          Counter POS
+          <span id="badge-cart-count" class="hidden px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-orange-600 text-white">0</span>
+        </button>
+
+        <button data-tab="inventory" onclick="switchTab('inventory')" class="nav-tab flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          Inventory & Catalog
+        </button>
+
+        <button data-tab="stockin" onclick="switchTab('stockin')" class="nav-tab flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Stock In (Restock)
+        </button>
+
+        <button data-tab="sales" onclick="switchTab('sales')" class="nav-tab flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+          Sales & Credit
+          <span id="badge-unpaid-count" class="hidden px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">0</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Toast Notification Banner -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Main Workspace Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
+    <!-- =================================================================== -->
+    <!-- SCREEN 1: DASHBOARD                                                 -->
+    <!-- =================================================================== -->
+    <section id="screen-dashboard" class="space-y-6">
+      <!-- Quick Actions Bar -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <button onclick="switchTab('pos')" class="group flex items-center justify-between p-4 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition text-left">
+          <div>
+            <p class="text-xs font-medium text-orange-100 uppercase tracking-wider">Fast Checkout</p>
+            <p class="text-base font-bold mt-0.5">New Counter Sale</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center group-hover:scale-105 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17"/></svg>
+          </div>
+        </button>
+
+        <button onclick="switchTab('stockin')" class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900 hover:border-orange-500/50 border border-slate-200 dark:border-slate-800 shadow-sm transition text-left">
+          <div>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Supplier Delivery</p>
+            <p class="text-base font-bold mt-0.5">Record Stock In</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-105 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          </div>
+        </button>
+
+        <button onclick="openAddMaterialModal()" class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900 hover:border-orange-500/50 border border-slate-200 dark:border-slate-800 shadow-sm transition text-left">
+          <div>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Catalog Setup</p>
+            <p class="text-base font-bold mt-0.5">Add New Material</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+        </button>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Today's Sales</span>
+            <span class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+          </div>
+          <p id="kpi-today-sales" class="text-2xl font-extrabold mt-3 tracking-tight">0.00</p>
+          <p id="kpi-today-count" class="text-xs text-slate-500 dark:text-slate-400 mt-1">0 receipts recorded today</p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Stock Valuation (Cost)</span>
+            <span class="p-2 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            </span>
+          </div>
+          <p id="kpi-stock-cost" class="text-2xl font-extrabold mt-3 tracking-tight">0.00</p>
+          <p id="kpi-stock-retail" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Retail est: 0.00</p>
+        </div>
+
+        <div onclick="jumpToLowStockInventory()" class="cursor-pointer group p-5 rounded-2xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 hover:border-rose-400 shadow-sm transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">Low / Out of Stock</span>
+            <span class="p-2 rounded-lg bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </span>
+          </div>
+          <p id="kpi-low-stock" class="text-2xl font-extrabold mt-3 text-rose-600 dark:text-rose-400">0 Items</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 group-hover:underline">Click to inspect reorder list →</p>
+        </div>
+
+        <div onclick="switchTab('sales', 'unpaid')" class="cursor-pointer group p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-400 shadow-sm transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Contractor Credit Due</span>
+            <span class="p-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            </span>
+          </div>
+          <p id="kpi-credit-due" class="text-2xl font-extrabold mt-3 tracking-tight">0.00</p>
+          <p id="kpi-credit-count" class="text-xs text-slate-500 dark:text-slate-400 mt-1">0 open balances</p>
+        </div>
+      </div>
+
+      <!-- Two-Column Dashboard Body: Low-Stock Alert Queue + Recent Activity -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Low-Stock Alert Queue (7 cols) -->
+        <div class="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+          <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div>
+              <h2 class="font-bold text-base flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                Low-Stock Reorder Queue
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Materials at or below reorder threshold (sorted by urgency)</p>
+            </div>
+            <button onclick="switchTab('stockin')" class="text-xs font-semibold text-orange-600 dark:text-orange-400 hover:underline">Batch Restock →</button>
+          </div>
+          <div id="dashboard-low-stock-list" class="divide-y divide-slate-100 dark:divide-slate-800/80"></div>
+        </div>
+
+        <!-- Recent Stock Movements & Sales Feed (5 cols) -->
+        <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+          <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div>
+              <h2 class="font-bold text-base">Recent Yard Activity</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Live ledger of sales, restocks & adjustments</p>
+            </div>
+          </div>
+          <div id="dashboard-activity-feed" class="divide-y divide-slate-100 dark:divide-slate-800/80 max-h-[420px] overflow-y-auto"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SCREEN 2: COUNTER POS (FAST CHECKOUT)                               -->
+    <!-- =================================================================== -->
+    <section id="screen-pos" class="hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Left Panel: Material Search & Quick-Add Grid (7 cols) -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <!-- Instant Search Input -->
+            <div class="relative">
+              <svg class="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input id="pos-search" type="text" oninput="renderPOSMaterials()" placeholder="Search material name, SKU, or spec (e.g., 42.5N, 12mm, 28G, cement)..." class="w-full pl-11 pr-10 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              <button onclick="document.getElementById('pos-search').value=''; renderPOSMaterials();" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-1.5 py-0.5 rounded">Clear</button>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div id="pos-category-pills" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
+          </div>
+
+          <!-- Material Cards Grid -->
+          <div id="pos-materials-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- Right Panel: Active Counter Cart & Checkout (5 cols) -->
+        <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden sticky top-24">
+          <div class="px-5 py-4 bg-slate-900 text-white dark:bg-slate-800/90 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              <h2 class="font-bold text-base">Current Order</h2>
+            </div>
+            <button onclick="clearCart()" class="text-xs text-slate-300 hover:text-white underline">Clear Cart</button>
+          </div>
+
+          <!-- Cart Items List -->
+          <div id="pos-cart-items" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-[340px] overflow-y-auto p-4"></div>
+
+          <!-- Checkout Footer & Payment Details -->
+          <div class="p-5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-800 space-y-4">
+            <!-- Customer Inputs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Customer / Contractor</label>
+                <input id="pos-customer-name" type="text" placeholder="Walk-in Customer" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Phone Number</label>
+                <input id="pos-customer-phone" type="tel" placeholder="0911-..." class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              </div>
+            </div>
+
+            <!-- Payment Status Toggle -->
+            <div>
+              <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Payment Status</label>
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button" onclick="setPaymentStatus('paid')" id="pay-status-paid" class="py-2 px-3 rounded-xl text-xs font-bold border transition">Paid in Full</button>
+                <button type="button" onclick="setPaymentStatus('partial')" id="pay-status-partial" class="py-2 px-3 rounded-xl text-xs font-bold border transition">Partial Deposit</button>
+                <button type="button" onclick="setPaymentStatus('unpaid')" id="pay-status-unpaid" class="py-2 px-3 rounded-xl text-xs font-bold border transition">Credit / Unpaid</button>
+              </div>
+            </div>
+
+            <!-- Partial Amount Input (Visible only when Partial is selected) -->
+            <div id="pos-partial-box" class="hidden">
+              <label class="block text-[11px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1">Amount Paid Now (<span class="curr-label">ETB</span>)</label>
+              <input id="pos-amount-paid" type="number" step="0.01" min="0" placeholder="0.00" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-sm font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            </div>
+
+            <!-- Totals Summary -->
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-baseline justify-between">
+              <span class="text-sm font-semibold text-slate-600 dark:text-slate-300">Grand Total</span>
+              <span id="pos-grand-total" class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">0.00 ETB</span>
+            </div>
+
+            <button onclick="completeSale()" class="w-full py-3.5 px-4 rounded-xl bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-bold text-sm shadow-md shadow-orange-600/20 transition flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Complete Sale & Issue Receipt
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SCREEN 3: INVENTORY & CATALOG                                       -->
+    <!-- =================================================================== -->
+    <section id="screen-inventory" class="hidden space-y-5">
+      <!-- Top Controls & Filters -->
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
+          <div class="relative flex-1 max-w-md">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input id="inv-search" type="text" oninput="renderInventoryTable()" placeholder="Filter by SKU, material, or spec..." class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+          </div>
+
+          <select id="inv-category-filter" onchange="renderInventoryTable()" class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <option value="All">All Categories</option>
+          </select>
+
+          <select id="inv-status-filter" onchange="renderInventoryTable()" class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <option value="all">All Stock Status</option>
+            <option value="low">Low & Out of Stock</option>
+            <option value="out">Out of Stock Only</option>
+            <option value="healthy">Healthy Stock</option>
+          </select>
+        </div>
+
+        <button onclick="openAddMaterialModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold shadow-sm transition shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Add Material
+        </button>
+      </div>
+
+      <!-- Materials Table -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th class="py-3.5 px-4">SKU & Material</th>
+                <th class="py-3.5 px-4">Category</th>
+                <th class="py-3.5 px-4 text-right">Cost Price</th>
+                <th class="py-3.5 px-4 text-right">Selling Price</th>
+                <th class="py-3.5 px-4 text-right">On Hand</th>
+                <th class="py-3.5 px-4 text-center">Status</th>
+                <th class="py-3.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SCREEN 4: STOCK IN (SUPPLIER RESTOCK)                               -->
+    <!-- =================================================================== -->
+    <section id="screen-stockin" class="hidden max-w-4xl mx-auto space-y-5">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-lg font-bold">Record Supplier Delivery (Stock In)</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Log incoming materials from a supplier invoice to increment stock & update latest unit cost.</p>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">Atomic Ledger Update</span>
+        </div>
+
+        <div class="p-6 space-y-5">
+          <!-- Delivery Metadata -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Supplier Invoice / Waybill # *</label>
+              <input id="stockin-ref" type="text" placeholder="e.g., INV-2026-884" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Supplier Name</label>
+              <input id="stockin-supplier" type="text" placeholder="e.g., Dangote Cement Factory / Abyssinia Steel" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+          </div>
+
+          <!-- Batch Line Items -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Delivered Materials</label>
+              <button type="button" onclick="addStockInRow()" class="inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 dark:text-orange-400 hover:underline">
+                + Add Another Line
+              </button>
+            </div>
+
+            <div id="stockin-rows-container" class="space-y-3"></div>
+          </div>
+
+          <!-- Batch Footer -->
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span class="text-xs text-slate-500 dark:text-slate-400">Total Restock Value:</span>
+              <p id="stockin-total-cost" class="text-xl font-extrabold">0.00 ETB</p>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <button type="button" onclick="resetStockInForm()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm font-semibold transition">Clear</button>
+              <button type="button" onclick="submitStockIn()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-sm transition">Save Stock In</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SCREEN 5: SALES & CONTRACTOR CREDIT LEDGER                          -->
+    <!-- =================================================================== -->
+    <section id="screen-sales" class="hidden space-y-5">
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-1.5">
+          <button onclick="setSalesFilter('all')" id="sales-filter-all" class="sales-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition">All Receipts</button>
+          <button onclick="setSalesFilter('paid')" id="sales-filter-paid" class="sales-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition">Paid</button>
+          <button onclick="setSalesFilter('partial')" id="sales-filter-partial" class="sales-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition">Partial</button>
+          <button onclick="setSalesFilter('unpaid')" id="sales-filter-unpaid" class="sales-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition">Unpaid / Credit</button>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Click "Settle Balance" on partial or unpaid contractor invoices to record follow-up payments.</p>
+      </div>
+
+      <div id="sales-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: ADD NEW MATERIAL                                             -->
+  <!-- ===================================================================== -->
+  <div id="modal-add-material" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-base">Add New Construction Material</h3>
+        <button onclick="closeModal('modal-add-material')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">✕</button>
+      </div>
+      <form id="form-add-material" onsubmit="handleCreateMaterial(event)" class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">SKU / Code *</label>
+            <input id="new-mat-sku" required placeholder="e.g., CEM-003" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono uppercase" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Category *</label>
+            <select id="new-mat-category" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm">
+              <option>Cement</option>
+              <option>Steel & Rebar</option>
+              <option>Roofing</option>
+              <option>Paint</option>
+              <option>Plumbing</option>
+              <option>Electrical</option>
+              <option>Testing</option>
+              <option>Another</option>
+              <option>Electrical</option>
+              <option>Electrical</option>
+              <option>Timber & Boards</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Material Name *</label>
+            <input id="new-mat-name" required placeholder="e.g., Habesha OPC Cement" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Spec / Grade</label>
+            <input id="new-mat-spec" placeholder="e.g., 42.5N / 50kg" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Unit *</label>
+            <select id="new-mat-unit" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm">
+              <option value="bag">bag</option>
+              <option value="pcs">pcs</option>
+              <option value="sheet">sheet</option>
+              <option value="m">m (meter)</option>
+              <option value="kg">kg</option>
+              <option value="roll">roll</option>
+              <option value="pail">pail</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Cost Price *</label>
+            <input id="new-mat-cost" type="number" step="0.01" min="0" required placeholder="0.00" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Selling Price *</label>
+            <input id="new-mat-price" type="number" step="0.01" min="0" required placeholder="0.00" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Opening Stock *</label>
+            <input id="new-mat-stock" type="number" step="0.001" min="0" required value="0" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Reorder Alert Level *</label>
+            <input id="new-mat-reorder" type="number" step="0.001" min="0" required value="10" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono" />
+          </div>
+        </div>
+
+        <div class="pt-3 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-add-material')" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-semibold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold">Save Material</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: STOCK ADJUSTMENT (DAMAGE / COUNT CORRECTION)                 -->
+  <!-- ===================================================================== -->
+  <div id="modal-adjust-stock" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-base">Stock Adjustment</h3>
+        <button onclick="closeModal('modal-adjust-stock')" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+      <form onsubmit="handleStockAdjustment(event)" class="p-6 space-y-4">
+        <input type="hidden" id="adj-material-id" />
+        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+          <p id="adj-material-name" class="font-bold text-sm"></p>
+          <p id="adj-current-stock" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"></p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Adjustment Type</label>
+            <select id="adj-direction" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold">
+              <option value="-1">Deduct Stock (-)</option>
+              <option value="1">Add Stock (+)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Quantity *</label>
+            <input id="adj-qty" type="number" step="0.001" min="0.001" required placeholder="e.g., 2" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Reason (Required for Audit) *</label>
+          <select id="adj-reason" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm">
+            <option value="Damaged / Torn Packaging">Damaged / Torn Packaging</option>
+            <option value="Water / Weather Damage">Water / Weather Damage</option>
+            <option value="Physical Yard Count Correction">Physical Yard Count Correction</option>
+            <option value="Customer Return (Good Condition)">Customer Return (Good Condition)</option>
+          </select>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-adjust-stock')" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-semibold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-slate-900 dark:bg-orange-600 text-white text-sm font-bold">Record Adjustment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: MATERIAL MOVEMENT AUDIT TRAIL                                -->
+  <!-- ===================================================================== -->
+  <div id="modal-audit-trail" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 id="audit-title" class="font-bold text-base">Stock Movement Ledger</h3>
+          <p id="audit-subtitle" class="text-xs text-slate-500 dark:text-slate-400"></p>
+        </div>
+        <button onclick="closeModal('modal-audit-trail')" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+      <div id="audit-list" class="p-6 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 4: SALE RECEIPT MODAL                                           -->
+  <!-- ===================================================================== -->
+  <div id="modal-receipt" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full shadow-2xl overflow-hidden">
+      <div id="receipt-printable" class="p-6 space-y-4">
+        <div class="text-center border-b border-dashed border-slate-300 dark:border-slate-700 pb-4">
+          <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 mb-2">✓</div>
+          <h3 class="font-extrabold text-lg">Bole Hardware & Supply</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Addis Ababa • Tel: +251 911 234 567</p>
+          <div class="mt-2 inline-block px-2.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-mono text-xs font-bold" id="rcpt-number">RCP-2026-0001</div>
+        </div>
+
+        <div class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+          <div class="flex justify-between"><span>Date:</span><span id="rcpt-date" class="font-medium"></span></div>
+          <div class="flex justify-between"><span>Customer:</span><span id="rcpt-customer" class="font-semibold"></span></div>
+          <div class="flex justify-between"><span>Payment Status:</span><span id="rcpt-status" class="font-bold uppercase"></span></div>
+        </div>
+
+        <div class="border-t border-b border-dashed border-slate-300 dark:border-slate-700 py-3 space-y-2" id="rcpt-items"></div>
+
+        <div class="space-y-1 text-sm">
+          <div class="flex justify-between font-bold text-base">
+            <span>Total</span>
+            <span id="rcpt-total"></span>
+          </div>
+          <div class="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>Amount Paid</span>
+            <span id="rcpt-paid"></span>
+          </div>
+          <div id="rcpt-balance-row" class="flex justify-between text-xs font-bold text-rose-600 dark:text-rose-400 hidden">
+            <span>Balance Due</span>
+            <span id="rcpt-balance"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+        <button onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-100 transition">Print Receipt</button>
+        <button onclick="closeModal('modal-receipt')" class="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition">Start Next Sale →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 5: RESET DEMO CONFIRMATION                                      -->
+  <!-- ===================================================================== -->
+  <div id="modal-reset" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full p-6 space-y-4 shadow-2xl">
+      <h3 class="font-bold text-base">Reset Demo Data?</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">This will restore all 12 construction materials, initial stock quantities, sample receipts, and ledger movements back to their original starting state.</p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('modal-reset')" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">Cancel</button>
+        <button onclick="resetDemoData()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">Yes, Reset Everything</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. INITIAL SEED DATA & APPLICATION STATE
+    // =========================================================================
+    const STORAGE_KEY = 'buildstock_mvp_state_v1';
+    const USD_RATE = 135.0; // Approximate ETB -> USD preview conversion rate
+
+    const SEED_MATERIALS = [
+      { id: 1, sku: 'CEM-001', name: 'Dangote OPC Cement', spec: '42.5N (50kg)', category: 'Cement', unit: 'bag', cost_price: 1180, selling_price: 1320, reorder_level: 30, current_stock: 18 },
+      { id: 2, sku: 'CEM-002', name: 'Mugher PPC Cement', spec: '32.5R (50kg)', category: 'Cement', unit: 'bag', cost_price: 1090, selling_price: 1220, reorder_level: 40, current_stock: 145 },
+      { id: 3, sku: 'STL-012', name: 'Deformed Rebar 12mm', spec: '12m ribbed bar', category: 'Steel & Rebar', unit: 'pcs', cost_price: 1450, selling_price: 1650, reorder_level: 50, current_stock: 85 },
+      { id: 4, sku: 'STL-016', name: 'Deformed Rebar 16mm', spec: '12m ribbed bar', category: 'Steel & Rebar', unit: 'pcs', cost_price: 2580, selling_price: 2890, reorder_level: 25, current_stock: 12 },
+      { id: 5, sku: 'STL-090', name: 'Binding Wire 1.5mm', spec: 'Annealed black', category: 'Steel & Rebar', unit: 'kg', cost_price: 165, selling_price: 195, reorder_level: 20, current_stock: 64.5 },
+      { id: 6, sku: 'ROF-028', name: 'Galvanized Roofing Sheet', spec: '28 Gauge Corrugated', category: 'Roofing', unit: 'sheet', cost_price: 890, selling_price: 1020, reorder_level: 20, current_stock: 0 },
+      { id: 7, sku: 'ROF-400', name: 'EGA 400 Roofing Sheet', spec: '0.4mm Colored', category: 'Roofing', unit: 'sheet', cost_price: 1420, selling_price: 1620, reorder_level: 15, current_stock: 54 },
+      { id: 8, sku: 'PNT-020', name: 'Mega Weatherguard Paint', spec: '20L Exterior White', category: 'Paint', unit: 'pail', cost_price: 4600, selling_price: 5350, reorder_level: 10, current_stock: 9 },
+      { id: 9, sku: 'PLM-020', name: 'PPR Water Pipe 20mm', spec: 'PN20 (4m length)', category: 'Plumbing', unit: 'pcs', cost_price: 240, selling_price: 295, reorder_level: 30, current_stock: 110 },
+      { id: 10, sku: 'PLM-110', name: 'PVC Drainage Pipe 110mm', spec: 'Heavy Duty (6m)', category: 'Plumbing', unit: 'pcs', cost_price: 1120, selling_price: 1340, reorder_level: 15, current_stock: 28 },
+      { id: 11, sku: 'ELC-025', name: 'Copper Electrical Cable', spec: '2.5mm² Single Core', category: 'Electrical', unit: 'm', cost_price: 48, selling_price: 62, reorder_level: 100, current_stock: 340.0 },
+      { id: 12, sku: 'WOD-018', name: 'Marine Plywood 18mm', spec: '1220x2440mm Formwork', category: 'Timber & Boards', unit: 'sheet', cost_price: 2750, selling_price: 3150, reorder_level: 10, current_stock: 22 }
+    ];
+
+    function buildDefaultState() {
+      const now = Date.now();
+      return {
+        currency: 'ETB',
+        materials: JSON.parse(JSON.stringify(SEED_MATERIALS)),
+        sales: [
+          {
+            id: 101,
+            receipt_no: 'RCP-2026-0418',
+            customer_name: 'Dawit Bekele (Contractor)',
+            customer_phone: '0911-442211',
+            total_amount: 46200,
+            amount_paid: 46200,
+            payment_status: 'paid',
+            sold_at: new Date(now - 1000 * 60 * 95).toISOString(),
+            items: [
+              { material_id: 2, name: 'Mugher PPC Cement', unit: 'bag', quantity: 25, unit_price: 1220, line_total: 30500 },
+              { material_id: 3, name: 'Deformed Rebar 12mm', unit: 'pcs', quantity: 10, unit_price: 1570, line_total: 15700 }
+            ]
+          },
+          {
+            id: 102,
+            receipt_no: 'RCP-2026-0419',
+            customer_name: 'Selamawit Building PLC',
+            customer_phone: '0912-889900',
+            total_amount: 34680,
+            amount_paid: 15000,
+            payment_status: 'partial',
+            sold_at: new Date(now - 1000 * 60 * 35).toISOString(),
+            items: [
+              { material_id: 4, name: 'Deformed Rebar 16mm', unit: 'pcs', quantity: 12, unit_price: 2890, line_total: 34680 }
+            ]
+          }
+        ],
+        movements: [
+          { id: 1, material_id: 2, movement_type: 'stock_in', quantity_delta: 170, reference_code: 'INV-2026-091', reason: 'Supplier delivery (Mugher)', created_at: new Date(now - 1000 * 60 * 240).toISOString() },
+          { id: 2, material_id: 2, movement_type: 'stock_out', quantity_delta: -25, reference_code: 'RCP-2026-0418', reason: 'Counter sale', created_at: new Date(now - 1000 * 60 * 95).toISOString() },
+          { id: 3, material_id: 3, movement_type: 'stock_out', quantity_delta: -10, reference_code: 'RCP-2026-0418', reason: 'Counter sale', created_at: new Date(now - 1000 * 60 * 95).toISOString() },
+          { id: 4, material_id: 4, movement_type: 'stock_out', quantity_delta: -12, reference_code: 'RCP-2026-0419', reason: 'Counter sale (Partial)', created_at: new Date(now - 1000 * 60 * 35).toISOString() },
+          { id: 5, material_id: 1, movement_type: 'adjustment', quantity_delta: -2, reference_code: 'ADJ-014', reason: 'Damaged / Torn Packaging', created_at: new Date(now - 1000 * 60 * 18).toISOString() }
+        ]
+      };
+    }
+
+    let state = loadState();
+    let activeTab = 'dashboard';
+    let posCategory = 'All';
+    let cart = []; // { material_id, quantity, unit_price }
+    let posPaymentStatus = 'paid';
+    let salesFilter = 'all';
+    let stockInRows = [];
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (e) { /* ignore storage errors */ }
+      return buildDefaultState();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) { /* ignore storage errors */ }
+    }
+
+    // =========================================================================
+    // 2. FORMATTING & UI HELPERS
+    // =========================================================================
+    function formatMoney(etbAmount) {
+      const val = state.currency === 'USD' ? (etbAmount / USD_RATE) : etbAmount;
+      const formatted = Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return `${formatted} ${state.currency}`;
+    }
+
+    function formatQty(num) {
+      return Number(Number(num || 0).toFixed(3)).toString();
+    }
+
+    function timeAgo(iso) {
+      const mins = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+      if (mins < 60) return `${mins}m ago`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs}h ago`;
+      return new Date(iso).toLocaleDateString();
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const colors = type === 'error'
+        ? 'bg-rose-600 text-white'
+        : type === 'warning'
+        ? 'bg-amber-600 text-white'
+        : 'bg-slate-900 dark:bg-emerald-600 text-white';
+
+      const toast = document.createElement('div');
+      toast.className = `${colors} pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center justify-between gap-3 transition-all duration-200`;
+      toast.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()" class="opacity-75 hover:opacity-100">✕</button>`;
+      container.appendChild(toast);
+      setTimeout(() => { if (toast.parentElement) toast.remove(); }, 3600);
+    }
+
+    function setCurrency(curr) {
+      state.currency = curr;
+      saveState();
+      updateCurrencyButtons();
+      renderAll();
+    }
+
+    function updateCurrencyButtons() {
+      const etbBtn = document.getElementById('btn-curr-etb');
+      const usdBtn = document.getElementById('btn-curr-usd');
+      const activeCls = 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs';
+      const inactiveCls = 'text-slate-500 dark:text-slate-400 hover:text-slate-800';
+      etbBtn.className = `px-2.5 py-1 rounded-lg text-xs font-semibold transition ${state.currency === 'ETB' ? activeCls : inactiveCls}`;
+      usdBtn.className = `px-2.5 py-1 rounded-lg text-xs font-semibold transition ${state.currency === 'USD' ? activeCls : inactiveCls}`;
+      document.querySelectorAll('.curr-label').forEach(el => el.textContent = state.currency);
+    }
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    function switchTab(tab, subFilter = null) {
+      activeTab = tab;
+      ['dashboard', 'pos', 'inventory', 'stockin', 'sales'].forEach(t => {
+        document.getElementById(`screen-${t}`).classList.toggle('hidden', t !== tab);
+      });
+
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        const isCurrent = btn.dataset.tab === tab;
+        btn.className = isCurrent
+          ? 'nav-tab flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-orange-600 text-white shadow-xs'
+          : 'nav-tab flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800';
+      });
+
+      if (tab === 'pos') {
+        renderPOSCategories();
+        renderPOSMaterials();
+        renderCart();
+        setTimeout(() => document.getElementById('pos-search').focus(), 50);
+      } else if (tab === 'inventory') {
+        populateInventoryCategoryFilter();
+        renderInventoryTable();
+      } else if (tab === 'stockin') {
+        if (stockInRows.length === 0) addStockInRow();
+        renderStockInRows();
+      } else if (tab === 'sales') {
+        if (subFilter) salesFilter = subFilter;
+        renderSalesLedger();
+      } else {
+        renderDashboard();
+      }
+    }
+
+    function jumpToLowStockInventory() {
+      document.getElementById('inv-status-filter').value = 'low';
+      switchTab('inventory');
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // =========================================================================
+    // 3. DASHBOARD RENDERING
+    // =========================================================================
+    function renderDashboard() {
+      const lowStockItems = state.materials
+        .filter(m => m.current_stock <= m.reorder_level)
+        .sort((a, b) => (a.current_stock - a.reorder_level) - (b.current_stock - b.reorder_level));
+
+      // Update Top Nav Badges
+      const lowBadge = document.getElementById('badge-low-stock');
+      lowBadge.textContent = lowStockItems.length;
+      lowBadge.classList.toggle('hidden', lowStockItems.length === 0);
+
+      const unpaidSales = state.sales.filter(s => s.payment_status !== 'paid');
+      const unpaidBadge = document.getElementById('badge-unpaid-count');
+      unpaidBadge.textContent = unpaidSales.length;
+      unpaidBadge.classList.toggle('hidden', unpaidSales.length === 0);
+
+      // KPIs
+      const todaySalesTotal = state.sales.reduce((sum, s) => sum + s.total_amount, 0);
+      document.getElementById('kpi-today-sales').textContent = formatMoney(todaySalesTotal);
+      document.getElementById('kpi-today-count').textContent = `${state.sales.length} receipts recorded today`;
+
+      const totalCostVal = state.materials.reduce((sum, m) => sum + (m.current_stock * m.cost_price), 0);
+      const totalRetailVal = state.materials.reduce((sum, m) => sum + (m.current_stock * m.selling_price), 0);
+      document.getElementById('kpi-stock-cost').textContent = formatMoney(totalCostVal);
+      document.getElementById('kpi-stock-retail').textContent = `Retail est: ${formatMoney(totalRetailVal)}`;
+
+      document.getElementById('kpi-low-stock').textContent = `${lowStockItems.length} ${lowStockItems.length === 1 ? 'Item' : 'Items'}`;
+
+      const creditDue = unpaidSales.reduce((sum, s) => sum + (s.total_amount - s.amount_paid), 0);
+      document.getElementById('kpi-credit-due').textContent = formatMoney(creditDue);
+      document.getElementById('kpi-credit-count').textContent = `${unpaidSales.length} open contractor balances`;
+
+      // Low-Stock Alert Queue
+      const queueEl = document.getElementById('dashboard-low-stock-list');
+      if (lowStockItems.length === 0) {
+        queueEl.innerHTML = `<div class="p-8 text-center text-sm text-slate-500 dark:text-slate-400">All materials are comfortably above reorder levels.</div>`;
+      } else {
+        queueEl.innerHTML = lowStockItems.map(m => {
+          const isOut = m.current_stock <= 0;
+          return `
+            <div class="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono text-xs text-slate-400">${m.sku}</span>
+                  <span class="font-semibold text-sm truncate">${m.name}</span>
+                  <span class="px-2 py-0.5 rounded-md text-[11px] font-bold ${isOut ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300'}">
+                    ${isOut ? 'OUT OF STOCK' : 'LOW STOCK'}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  On Hand: <strong class="text-slate-800 dark:text-slate-200">${formatQty(m.current_stock)} ${m.unit}</strong> • Reorder Level: ${formatQty(m.reorder_level)} ${m.unit}
+                </p>
+              </div>
+              <button onclick="quickRestockMaterial(${m.id})" class="shrink-0 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-600 text-orange-700 hover:text-white dark:bg-orange-500/15 dark:hover:bg-orange-600 dark:text-orange-300 dark:hover:text-white text-xs font-bold transition">
+                Restock Now
+              </button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Recent Activity Feed
+      const feedEl = document.getElementById('dashboard-activity-feed');
+      const recent = [...state.movements].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
+      feedEl.innerHTML = recent.map(mov => {
+        const mat = state.materials.find(m => m.id === mov.material_id);
+        const name = mat ? mat.name : 'Material';
+        const unit = mat ? mat.unit : '';
+        const isPos = mov.quantity_delta > 0;
+        const badge = mov.movement_type === 'stock_in'
+          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+          : mov.movement_type === 'stock_out'
+          ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'
+          : 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300';
+
+        return `
+          <div class="px-5 py-3 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${badge}">${mov.movement_type.replace('_', ' ')}</span>
+                <span class="text-sm font-semibold truncate">${name}</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">${mov.reason || ''} ${mov.reference_code ? `• <span class="font-mono">${mov.reference_code}</span>` : ''}</p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="font-mono text-xs font-bold ${isPos ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
+                ${isPos ? '+' : ''}${formatQty(mov.quantity_delta)} ${unit}
+              </p>
+              <p class="text-[11px] text-slate-400">${timeAgo(mov.created_at)}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 4. COUNTER POS & CHECKOUT WORKFLOW
+    // =========================================================================
+    function renderPOSCategories() {
+      const categories = ['All', ...new Set(state.materials.map(m => m.category))];
+      const container = document.getElementById('pos-category-pills');
+      container.innerHTML = categories.map(cat => {
+        const active = cat === posCategory;
+        return `
+          <button onclick="posCategory='${cat}'; renderPOSCategories(); renderPOSMaterials();" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${active ? 'bg-slate-900 text-white dark:bg-orange-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'}">
+            ${cat}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderPOSMaterials() {
+      const q = (document.getElementById('pos-search').value || '').trim().toLowerCase();
+      const filtered = state.materials.filter(m => {
+        const matchCat = posCategory === 'All' || m.category === posCategory;
+        const matchText = !q || m.name.toLowerCase().includes(q) || m.sku.toLowerCase().includes(q) || (m.spec && m.spec.toLowerCase().includes(q));
+        return matchCat && matchText;
+      });
+
+      const grid = document.getElementById('pos-materials-grid');
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full p-8 text-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-500">No materials match "${q}".</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(m => {
+        const isOut = m.current_stock <= 0;
+        const isLow = !isOut && m.current_stock <= m.reorder_level;
+        const inCart = cart.find(c => c.material_id === m.id);
+
+        return `
+          <button type="button" ${isOut ? 'disabled' : `onclick="addToCart(${m.id})"`} class="text-left p-4 rounded-2xl border transition flex flex-col justify-between gap-3 ${isOut ? 'opacity-55 cursor-not-allowed bg-slate-100/70 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800' : inCart ? 'bg-orange-50/60 dark:bg-orange-500/10 border-orange-500 shadow-xs' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-400 shadow-xs'}">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-mono text-[11px] font-semibold text-slate-400">${m.sku}</span>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold ${isOut ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300' : isLow ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'}">
+                  ${isOut ? 'Out of Stock' : `${formatQty(m.current_stock)} ${m.unit}`}
+                </span>
+              </div>
+              <h3 class="font-bold text-sm mt-1.5 leading-snug">${m.name}</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">${m.spec || m.category}</p>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div>
+                <span class="font-extrabold text-sm text-slate-900 dark:text-white">${formatMoney(m.selling_price)}</span>
+                <span class="text-[11px] text-slate-400">/ ${m.unit}</span>
+              </div>
+              ${inCart ? `<span class="px-2 py-0.5 rounded-lg bg-orange-600 text-white text-xs font-bold">${formatQty(inCart.quantity)} in cart</span>` : `<span class="text-xs font-semibold text-orange-600 dark:text-orange-400">+ Add</span>`}
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function addToCart(materialId) {
+      const mat = state.materials.find(m => m.id === materialId);
+      if (!mat || mat.current_stock <= 0) return;
+
+      const existing = cart.find(c => c.material_id === materialId);
+      if (existing) {
+        if (existing.quantity + 1 > mat.current_stock) {
+          showToast(`Only ${formatQty(mat.current_stock)} ${mat.unit} available in yard.`, 'warning');
+          return;
+        }
+        existing.quantity = Number((existing.quantity + 1).toFixed(3));
+      } else {
+        cart.push({ material_id: materialId, quantity: 1, unit_price: mat.selling_price });
+      }
+      renderPOSMaterials();
+      renderCart();
+    }
+
+    function updateCartQty(materialId, newQtyRaw) {
+      const mat = state.materials.find(m => m.id === materialId);
+      const item = cart.find(c => c.material_id === materialId);
+      if (!mat || !item) return;
+
+      const val = parseFloat(newQtyRaw);
+      if (isNaN(val) || val <= 0) {
+        cart = cart.filter(c => c.material_id !== materialId);
+      } else if (val > mat.current_stock) {
+        showToast(`Cannot exceed available stock (${formatQty(mat.current_stock)} ${mat.unit}).`, 'warning');
+        item.quantity = mat.current_stock;
+      } else {
+        item.quantity = Number(val.toFixed(3));
+      }
+      renderPOSMaterials();
+      renderCart();
+    }
+
+    function updateCartPrice(materialId, newPriceRaw) {
+      const item = cart.find(c => c.material_id === materialId);
+      const val = parseFloat(newPriceRaw);
+      if (item && !isNaN(val) && val >= 0) {
+        item.unit_price = val;
+        renderCartTotals();
+      }
+    }
+
+    function clearCart() {
+      cart = [];
+      renderPOSMaterials();
+      renderCart();
+    }
+
+    function setPaymentStatus(status) {
+      posPaymentStatus = status;
+      ['paid', 'partial', 'unpaid'].forEach(st => {
+        const btn = document.getElementById(`pay-status-${st}`);
+        const active = st === status;
+        btn.className = active
+          ? 'py-2 px-3 rounded-xl text-xs font-bold border border-orange-600 bg-orange-600 text-white transition'
+          : 'py-2 px-3 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition';
+      });
+      document.getElementById('pos-partial-box').classList.toggle('hidden', status !== 'partial');
+    }
+
+    function renderCart() {
+      const badge = document.getElementById('badge-cart-count');
+      badge.textContent = cart.length;
+      badge.classList.toggle('hidden', cart.length === 0);
+
+      const container = document.getElementById('pos-cart-items');
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div class="py-10 text-center text-slate-400">
+            <p class="text-sm font-medium">Cart is empty</p>
+            <p class="text-xs mt-1">Tap any material card on the left to add items.</p>
+          </div>
+        `;
+      } else {
+        container.innerHTML = cart.map(item => {
+          const mat = state.materials.find(m => m.id === item.material_id);
+          const lineTotal = item.quantity * item.unit_price;
+          return `
+            <div class="py-3 first:pt-0 last:pb-0 space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <p class="font-bold text-sm leading-tight">${mat.name}</p>
+                  <p class="text-[11px] text-slate-400">Available: ${formatQty(mat.current_stock)} ${mat.unit}</p>
+                </div>
+                <button onclick="updateCartQty(${mat.id}, 0)" class="text-xs text-slate-400 hover:text-rose-500">Remove</button>
+              </div>
+
+              <div class="flex items-center justify-between gap-2">
+                <!-- Quantity Stepper + Decimal Input -->
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="updateCartQty(${mat.id}, ${item.quantity - 1})" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-sm hover:bg-slate-200">-</button>
+                  <input type="number" step="0.001" min="0.001" max="${mat.current_stock}" value="${item.quantity}" onchange="updateCartQty(${mat.id}, this.value)" class="w-16 text-center py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold" />
+                  <button type="button" onclick="updateCartQty(${mat.id}, ${item.quantity + 1})" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-sm hover:bg-slate-200">+</button>
+                  <span class="text-xs text-slate-500 ml-1">${mat.unit}</span>
+                </div>
+
+                <!-- Editable Unit Price (ETB) -->
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[11px] text-slate-400">@</span>
+                  <input type="number" step="0.01" min="0" value="${item.unit_price}" onchange="updateCartPrice(${mat.id}, this.value)" title="Override unit price (ETB)" class="w-20 text-right py-1 px-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono" />
+                </div>
+              </div>
+
+              <div class="text-right text-xs font-bold text-slate-700 dark:text-slate-200">
+                Line Total: ${formatMoney(lineTotal)}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+      renderCartTotals();
+    }
+
+    function renderCartTotals() {
+      const grandTotal = cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+      document.getElementById('pos-grand-total').textContent = formatMoney(grandTotal);
+    }
+
+    function completeSale() {
+      if (cart.length === 0) {
+        showToast('Add at least one material to the cart first.', 'error');
+        return;
+      }
+
+      const customerName = document.getElementById('pos-customer-name').value.trim();
+      const customerPhone = document.getElementById('pos-customer-phone').value.trim();
+
+      if (posPaymentStatus !== 'paid' && (!customerName || !customerPhone)) {
+        showToast('Customer Name & Phone are required for Partial or Credit sales.', 'error');
+        return;
+      }
+
+      const grandTotal = cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+      let amountPaid = grandTotal;
+
+      if (posPaymentStatus === 'unpaid') {
+        amountPaid = 0;
+      } else if (posPaymentStatus === 'partial') {
+        const rawPaid = parseFloat(document.getElementById('pos-amount-paid').value);
+        const etbPaid = state.currency === 'USD' ? (rawPaid * USD_RATE) : rawPaid;
+        if (isNaN(etbPaid) || etbPaid <= 0 || etbPaid >= grandTotal) {
+          showToast('Enter a valid deposit greater than 0 and less than the total.', 'error');
+          return;
+        }
+        amountPaid = Number(etbPaid.toFixed(2));
+      }
+
+      // Validate stock atomically
+      for (const item of cart) {
+        const mat = state.materials.find(m => m.id === item.material_id);
+        if (!mat || mat.current_stock < item.quantity) {
+          showToast(`Insufficient stock for ${mat ? mat.name : 'item'}.`, 'error');
+          return;
+        }
+      }
+
+      const receiptNo = `RCP-2026-0${420 + state.sales.length}`;
+      const nowIso = new Date().toISOString();
+      const saleItems = [];
+
+      // Deduct stock & record ledger movements
+      cart.forEach((item, idx) => {
+        const mat = state.materials.find(m => m.id === item.material_id);
+        mat.current_stock = Number((mat.current_stock - item.quantity).toFixed(3));
+        const lineTotal = Number((item.quantity * item.unit_price).toFixed(2));
+
+        saleItems.push({
+          material_id: mat.id,
+          name: mat.name,
+          unit: mat.unit,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          line_total: lineTotal
+        });
+
+        state.movements.push({
+          id: Date.now() + idx,
+          material_id: mat.id,
+          movement_type: 'stock_out',
+          quantity_delta: -item.quantity,
+          reference_code: receiptNo,
+          reason: `Counter sale (${posPaymentStatus})`,
+          created_at: nowIso
+        });
+      });
+
+      const newSale = {
+        id: Date.now(),
+        receipt_no: receiptNo,
+        customer_name: customerName || 'Walk-in Customer',
+        customer_phone: customerPhone || '—',
+        total_amount: Number(grandTotal.toFixed(2)),
+        amount_paid: amountPaid,
+        payment_status: posPaymentStatus,
+        sold_at: nowIso,
+        items: saleItems
+      };
+
+      state.sales.unshift(newSale);
+      saveState();
+
+      // Reset cart & form
+      cart = [];
+      document.getElementById('pos-customer-name').value = '';
+      document.getElementById('pos-customer-phone').value = '';
+      document.getElementById('pos-amount-paid').value = '';
+      setPaymentStatus('paid');
+
+      renderAll();
+      openReceiptModal(newSale);
+      showToast(`Sale ${receiptNo} completed & stock updated.`);
+    }
+
+    function openReceiptModal(sale) {
+      document.getElementById('rcpt-number').textContent = sale.receipt_no;
+      document.getElementById('rcpt-date').textContent = new Date(sale.sold_at).toLocaleString();
+      document.getElementById('rcpt-customer').textContent = `${sale.customer_name} (${sale.customer_phone})`;
+      document.getElementById('rcpt-status').textContent = sale.payment_status;
+
+      document.getElementById('rcpt-items').innerHTML = sale.items.map(it => `
+        <div class="flex justify-between text-xs">
+          <div>
+            <p class="font-semibold">${it.name}</p>
+            <p class="text-slate-500">${formatQty(it.quantity)} ${it.unit} × ${formatMoney(it.unit_price)}</p>
+          </div>
+          <span class="font-mono font-semibold">${formatMoney(it.line_total)}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('rcpt-total').textContent = formatMoney(sale.total_amount);
+      document.getElementById('rcpt-paid').textContent = formatMoney(sale.amount_paid);
+
+      const bal = sale.total_amount - sale.amount_paid;
+      const balRow = document.getElementById('rcpt-balance-row');
+      if (bal > 0.01) {
+        balRow.classList.remove('hidden');
+        document.getElementById('rcpt-balance').textContent = formatMoney(bal);
+      } else {
+        balRow.classList.add('hidden');
+      }
+
+      openModal('modal-receipt');
+    }
+
+    // =========================================================================
+    // 5. INVENTORY CATALOG, ADD MATERIAL, ADJUSTMENT & AUDIT TRAIL
+    // =========================================================================
+    function populateInventoryCategoryFilter() {
+      const select = document.getElementById('inv-category-filter');
+      const current = select.value;
+      const cats = ['All', ...new Set(state.materials.map(m => m.category))];
+      select.innerHTML = cats.map(c => `<option value="${c}">${c === 'All' ? 'All Categories' : c}</option>`).join('');
+      if (cats.includes(current)) select.value = current;
+    }
+
+    function renderInventoryTable() {
+      const q = (document.getElementById('inv-search').value || '').trim().toLowerCase();
+      const cat = document.getElementById('inv-category-filter').value;
+      const status = document.getElementById('inv-status-filter').value;
+
+      const filtered = state.materials.filter(m => {
+        const matchQ = !q || m.name.toLowerCase().includes(q) || m.sku.toLowerCase().includes(q) || (m.spec && m.spec.toLowerCase().includes(q));
+        const matchCat = cat === 'All' || m.category === cat;
+        const isOut = m.current_stock <= 0;
+        const isLow = m.current_stock <= m.reorder_level;
+        const matchStatus = status === 'all'
+          || (status === 'low' && isLow)
+          || (status === 'out' && isOut)
+          || (status === 'healthy' && !isLow);
+        return matchQ && matchCat && matchStatus;
+      });
+
+      const tbody = document.getElementById('inventory-table-body');
+      tbody.innerHTML = filtered.map(m => {
+        const isOut = m.current_stock <= 0;
+        const isLow = !isOut && m.current_stock <= m.reorder_level;
+        const statusPill = isOut
+          ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300">Out of Stock</span>`
+          : isLow
+          ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">Low Stock</span>`
+          : `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">In Stock</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+            <td class="py-3.5 px-4">
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-xs px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${m.sku}</span>
+                <span class="font-bold">${m.name}</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${m.spec || '—'} • Reorder at ${formatQty(m.reorder_level)} ${m.unit}</p>
+            </td>
+            <td class="py-3.5 px-4 text-xs font-medium text-slate-600 dark:text-slate-300">${m.category}</td>
+            <td class="py-3.5 px-4 text-right font-mono text-xs">${formatMoney(m.cost_price)}</td>
+            <td class="py-3.5 px-4 text-right font-mono text-xs font-bold">${formatMoney(m.selling_price)}</td>
+            <td class="py-3.5 px-4 text-right font-mono font-bold">
+              ${formatQty(m.current_stock)} <span class="text-xs font-normal text-slate-400">${m.unit}</span>
+            </td>
+            <td class="py-3.5 px-4 text-center">${statusPill}</td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap space-x-1">
+              <button onclick="openAuditTrail(${m.id})" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition">History</button>
+              <button onclick="openAdjustStockModal(${m.id})" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 transition">Adjust</button>
+              <button onclick="quickRestockMaterial(${m.id})" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-orange-50 hover:bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300 transition">+ Stock</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openAddMaterialModal() {
+      document.getElementById('form-add-material').reset();
+      openModal('modal-add-material');
+    }
+
+    function handleCreateMaterial(e) {
+      e.preventDefault();
+      const sku = document.getElementById('new-mat-sku').value.trim().toUpperCase();
+      if (state.materials.some(m => m.sku === sku)) {
+        showToast(`SKU ${sku} already exists.`, 'error');
+        return;
+      }
+
+      const initStock = parseFloat(document.getElementById('new-mat-stock').value) || 0;
+      const costPrice = parseFloat(document.getElementById('new-mat-cost').value) || 0;
+      const sellingPrice = parseFloat(document.getElementById('new-mat-price').value) || 0;
+      const reorderLevel = parseFloat(document.getElementById('new-mat-reorder').value) || 0;
+
+      const newMat = {
+        id: Date.now(),
+        sku,
+        name: document.getElementById('new-mat-name').value.trim(),
+        spec: document.getElementById('new-mat-spec').value.trim(),
+        category: document.getElementById('new-mat-category').value,
+        unit: document.getElementById('new-mat-unit').value,
+        cost_price: costPrice,
+        selling_price: sellingPrice,
+        reorder_level: reorderLevel,
+        current_stock: initStock
+      };
+
+      state.materials.push(newMat);
+      if (initStock > 0) {
+        state.movements.push({
+          id: Date.now() + 1,
+          material_id: newMat.id,
+          movement_type: 'stock_in',
+          quantity_delta: initStock,
+          reference_code: 'OPENING',
+          reason: 'Initial catalog opening stock',
+          created_at: new Date().toISOString()
+        });
+      }
+
+      saveState();
+      closeModal('modal-add-material');
+      renderAll();
+      showToast(`Added ${newMat.name} (${newMat.sku}) to catalog.`);
+    }
+
+    function openAdjustStockModal(materialId) {
+      const mat = state.materials.find(m => m.id === materialId);
+      if (!mat) return;
+      document.getElementById('adj-material-id').value = mat.id;
+      document.getElementById('adj-material-name').textContent = `${mat.sku} — ${mat.name}`;
+      document.getElementById('adj-current-stock').textContent = `Current Balance: ${formatQty(mat.current_stock)} ${mat.unit}`;
+      document.getElementById('adj-qty').value = '';
+      openModal('modal-adjust-stock');
+    }
+
+    function handleStockAdjustment(e) {
+      e.preventDefault();
+      const id = Number(document.getElementById('adj-material-id').value);
+      const dir = Number(document.getElementById('adj-direction').value);
+      const qty = parseFloat(document.getElementById('adj-qty').value);
+      const reason = document.getElementById('adj-reason').value;
+      const mat = state.materials.find(m => m.id === id);
+
+      if (!mat || isNaN(qty) || qty <= 0) return;
+      const delta = Number((dir * qty).toFixed(3));
+
+      if (mat.current_stock + delta < 0) {
+        showToast('Adjustment cannot result in negative stock.', 'error');
+        return;
+      }
+
+      mat.current_stock = Number((mat.current_stock + delta).toFixed(3));
+      state.movements.push({
+        id: Date.now(),
+        material_id: mat.id,
+        movement_type: 'adjustment',
+        quantity_delta: delta,
+        reference_code: `ADJ-${String(state.movements.length + 1).padStart(3, '0')}`,
+        reason,
+        created_at: new Date().toISOString()
+      });
+
+      saveState();
+      closeModal('modal-adjust-stock');
+      renderAll();
+      showToast(`Stock adjusted (${delta > 0 ? '+' : ''}${formatQty(delta)} ${mat.unit}) for ${mat.name}.`);
+    }
+
+    function openAuditTrail(materialId) {
+      const mat = state.materials.find(m => m.id === materialId);
+      if (!mat) return;
+      document.getElementById('audit-title').textContent = `${mat.name} (${mat.sku})`;
+      document.getElementById('audit-subtitle').textContent = `Current Balance: ${formatQty(mat.current_stock)} ${mat.unit} • Reorder Level: ${formatQty(mat.reorder_level)} ${mat.unit}`;
+
+      const movs = state.movements
+        .filter(mv => mv.material_id === materialId)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      const list = document.getElementById('audit-list');
+      if (movs.length === 0) {
+        list.innerHTML = `<p class="text-sm text-slate-500 text-center py-6">No movements recorded yet.</p>`;
+      } else {
+        list.innerHTML = movs.map(mv => {
+          const isPos = mv.quantity_delta > 0;
+          return `
+            <div class="py-3 flex items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800">${mv.movement_type.replace('_', ' ')}</span>
+                  <span class="font-mono text-xs text-slate-500">${mv.reference_code || ''}</span>
+                </div>
+                <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">${mv.reason || '—'}</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">${new Date(mv.created_at).toLocaleString()}</p>
+              </div>
+              <span class="font-mono text-sm font-extrabold ${isPos ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
+                ${isPos ? '+' : ''}${formatQty(mv.quantity_delta)} ${mat.unit}
+              </span>
+            </div>
+          `;
+        }).join('');
+      }
+      openModal('modal-audit-trail');
+    }
+
+    // =========================================================================
+    // 6. STOCK IN (BATCH SUPPLIER RESTOCK)
+    // =========================================================================
+    function quickRestockMaterial(materialId) {
+      const mat = state.materials.find(m => m.id === materialId);
+      if (!mat) return;
+      const suggestedQty = Math.max(10, (mat.reorder_level * 2) - mat.current_stock);
+      stockInRows = [{ material_id: mat.id, quantity: suggestedQty, unit_cost: mat.cost_price }];
+      switchTab('stockin');
+    }
+
+    function addStockInRow(materialId = null) {
+      const defaultMat = materialId ? state.materials.find(m => m.id === materialId) : state.materials[0];
+      stockInRows.push({
+        material_id: defaultMat.id,
+        quantity: 10,
+        unit_cost: defaultMat.cost_price
+      });
+      renderStockInRows();
+    }
+
+    function removeStockInRow(index) {
+      stockInRows.splice(index, 1);
+      if (stockInRows.length === 0) addStockInRow();
+      else renderStockInRows();
+    }
+
+    function updateStockInRow(index, field, value) {
+      const row = stockInRows[index];
+      if (!row) return;
+      if (field === 'material_id') {
+        row.material_id = Number(value);
+        const mat = state.materials.find(m => m.id === row.material_id);
+        if (mat) row.unit_cost = mat.cost_price;
+      } else if (field === 'quantity') {
+        row.quantity = parseFloat(value) || 0;
+      } else if (field === 'unit_cost') {
+        row.unit_cost = parseFloat(value) || 0;
+      }
+      renderStockInRows();
+    }
+
+    function renderStockInRows() {
+      const container = document.getElementById('stockin-rows-container');
+      container.innerHTML = stockInRows.map((row, idx) => {
+        const mat = state.materials.find(m => m.id === row.material_id) || state.materials[0];
+        const costChanged = Math.abs(row.unit_cost - mat.cost_price) > 0.01;
+
+        return `
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-5">
+              <label class="block text-[11px] font-semibold text-slate-500 mb-1">Material</label>
+              <select onchange="updateStockInRow(${idx}, 'material_id', this.value)" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+                ${state.materials.map(m => `<option value="${m.id}" ${m.id === row.material_id ? 'selected' : ''}>${m.sku} — ${m.name} (${formatQty(m.current_stock)} ${m.unit})</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="sm:col-span-3">
+              <label class="block text-[11px] font-semibold text-slate-500 mb-1">Qty Added (${mat.unit})</label>
+              <input type="number" step="0.001" min="0.001" value="${row.quantity}" onchange="updateStockInRow(${idx}, 'quantity', this.value)" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold" />
+            </div>
+
+            <div class="sm:col-span-3">
+              <label class="block text-[11px] font-semibold text-slate-500 mb-1">
+                Unit Cost (ETB) ${costChanged ? '<span class="text-amber-600 font-bold">• Updated</span>' : ''}
+              </label>
+              <input type="number" step="0.01" min="0" value="${row.unit_cost}" onchange="updateStockInRow(${idx}, 'unit_cost', this.value)" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono" />
+            </div>
+
+            <div class="sm:col-span-1 flex justify-end">
+              <button type="button" onclick="removeStockInRow(${idx})" class="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10" title="Remove row">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const totalCost = stockInRows.reduce((sum, r) => sum + (r.quantity * r.unit_cost), 0);
+      document.getElementById('stockin-total-cost').textContent = formatMoney(totalCost);
+    }
+
+    function resetStockInForm() {
+      document.getElementById('stockin-ref').value = '';
+      document.getElementById('stockin-supplier').value = '';
+      stockInRows = [];
+      addStockInRow();
+    }
+
+    function submitStockIn() {
+      const ref = document.getElementById('stockin-ref').value.trim() || `INV-${Date.now().toString().slice(-5)}`;
+      const supplier = document.getElementById('stockin-supplier').value.trim();
+
+      const validRows = stockInRows.filter(r => r.quantity > 0);
+      if (validRows.length === 0) {
+        showToast('Enter a valid quantity greater than 0.', 'error');
+        return;
+      }
+
+      const nowIso = new Date().toISOString();
+      validRows.forEach((row, i) => {
+        const mat = state.materials.find(m => m.id === row.material_id);
+        if (!mat) return;
+        mat.current_stock = Number((mat.current_stock + row.quantity).toFixed(3));
+        if (row.unit_cost > 0) mat.cost_price = row.unit_cost;
+
+        state.movements.push({
+          id: Date.now() + i,
+          material_id: mat.id,
+          movement_type: 'stock_in',
+          quantity_delta: row.quantity,
+          reference_code: ref,
+          reason: supplier ? `Restock from ${supplier}` : 'Supplier restock',
+          created_at: nowIso
+        });
+      });
+
+      saveState();
+      resetStockInForm();
+      renderAll();
+      showToast(`Recorded stock-in for ${validRows.length} item(s) under ${ref}.`);
+      switchTab('dashboard');
+    }
+
+    // =========================================================================
+    // 7. SALES & CONTRACTOR CREDIT LEDGER
+    // =========================================================================
+    function setSalesFilter(filter) {
+      salesFilter = filter;
+      renderSalesLedger();
+    }
+
+    function renderSalesLedger() {
+      ['all', 'paid', 'partial', 'unpaid'].forEach(f => {
+        const btn = document.getElementById(`sales-filter-${f}`);
+        btn.className = f === salesFilter
+          ? 'sales-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-900 text-white dark:bg-orange-600'
+          : 'sales-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
+      });
+
+      const filtered = state.sales.filter(s => salesFilter === 'all' || s.payment_status === salesFilter);
+      const container = document.getElementById('sales-list-container');
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full p-10 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm text-slate-500">No sales found in this filter.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(sale => {
+        const balance = sale.total_amount - sale.amount_paid;
+        const badgeCls = sale.payment_status === 'paid'
+          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+          : sale.payment_status === 'partial'
+          ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300'
+          : 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300';
+
+        return `
+          <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-4">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-mono text-xs font-bold text-orange-600 dark:text-orange-400">${sale.receipt_no}</span>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase ${badgeCls}">${sale.payment_status}</span>
+              </div>
+              <h3 class="font-bold text-base mt-1">${sale.customer_name}</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">${sale.customer_phone} • ${new Date(sale.sold_at).toLocaleString()}</p>
+
+              <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                ${sale.items.map(it => `
+                  <div class="flex justify-between text-xs text-slate-600 dark:text-slate-300">
+                    <span>${formatQty(it.quantity)} ${it.unit} × ${it.name}</span>
+                    <span class="font-mono">${formatMoney(it.line_total)}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+              <div>
+                <p class="text-xs text-slate-500">Total: <strong class="text-slate-900 dark:text-white">${formatMoney(sale.total_amount)}</strong></p>
+                ${balance > 0.01 ? `<p class="text-xs font-bold text-rose-600 dark:text-rose-400">Balance Due: ${formatMoney(balance)}</p>` : ''}
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick='openReceiptModal(${JSON.stringify(sale).replace(/'/g, "&#39;")})' class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-xs font-semibold transition">Receipt</button>
+                ${balance > 0.01 ? `<button onclick="settleSaleBalance(${sale.id})" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">Settle Balance</button>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function settleSaleBalance(saleId) {
+      const sale = state.sales.find(s => s.id === saleId);
+      if (!sale) return;
+      sale.amount_paid = sale.total_amount;
+      sale.payment_status = 'paid';
+      saveState();
+      renderAll();
+      showToast(`Balance settled for ${sale.receipt_no}.`);
+    }
+
+    // =========================================================================
+    // 8. RESET DEMO & BOOTSTRAP
+    // =========================================================================
+    function openResetConfirm() { openModal('modal-reset'); }
+
+    function resetDemoData() {
+      const curr = state.currency;
+      state = buildDefaultState();
+      state.currency = curr;
+      cart = [];
+      stockInRows = [];
+      saveState();
+      closeModal('modal-reset');
+      renderAll();
+      showToast('Demo data restored to initial state.');
+    }
+
+    function renderAll() {
+      updateCurrencyButtons();
+      renderDashboard();
+      if (activeTab === 'pos') { renderPOSCategories(); renderPOSMaterials(); renderCart(); }
+      if (activeTab === 'inventory') { populateInventoryCategoryFilter(); renderInventoryTable(); }
+      if (activeTab === 'stockin') { renderStockInRows(); }
+      if (activeTab === 'sales') { renderSalesLedger(); }
+    }
+
+    // Initialize App on Load
+    setPaymentStatus('paid');
+    switchTab('dashboard');
+  </script>
+</body>
+</html>
